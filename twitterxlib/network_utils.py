@@ -20,7 +20,7 @@ class NetworkUtils:
 
         self.proxy = network_proxy
         self.request_count = 0
-        self.downloader = AsyncDownloader(max_concurrent, network_proxy)
+        self.downloader = AsyncDownloader(max_concurrent, proxy=network_proxy, log_output = False)
         return
 
     def get_user_by_screen_name(self, screen_name: str) -> Dict[str, Any] | None:
@@ -83,8 +83,7 @@ class NetworkUtils:
         if not task_list or len(task_list) <= 0:
             return False
 
-        for task in task_list:
-            self.downloader.add_task(task.get('url', ''), task.get('file_path', ''))
+        self.downloader.tasks = task_list
         self.downloader.start()
 
         return True

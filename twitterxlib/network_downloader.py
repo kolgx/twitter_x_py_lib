@@ -1,6 +1,7 @@
 import asyncio
 import httpx
 from typing import Optional
+from pathlib import Path
 from .network_utils import quote_url
 
 class AsyncDownloader:
@@ -40,8 +41,10 @@ class AsyncDownloader:
                         response = await client.get(quote_url(url), timeout=(3.05, 16))
                         if response.status_code == 404:
                             raise Exception('404')
-                            
-                with open(file_path, 'wb') as f:
+
+                path = Path(file_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with open(path, 'wb') as f:
                     f.write(response.content)
 
                 if self.log_output:
