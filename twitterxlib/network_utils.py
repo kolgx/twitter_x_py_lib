@@ -2,11 +2,12 @@
 import re
 import httpx
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 from .simple_tool_utils import quote_url
+from .network_downloader import AsyncDownloader
 
 class NetworkUtils:
-    def __init__(self, cookie: str, network_proxy: str=None):
+    def __init__(self, cookie: str, network_proxy: str=None, max_concurrent:int = 4):
         self.headers = {
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
             'authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
@@ -19,6 +20,7 @@ class NetworkUtils:
 
         self.proxy = network_proxy
         self.request_count = 0
+        self.downloader = AsyncDownloader(max_concurrent, network_proxy)
         return
 
     def get_user_by_screen_name(self, screen_name: str) -> Dict[str, Any] | None:
@@ -75,4 +77,14 @@ class NetworkUtils:
             return json.loads(response.text)
         except Exception as e:
             print(f'Failed to fetch user media: {e}')
-            return None
+        return None
+
+    def download_source_by_list(self, task_list:List[Dict[str, str]]) -> bool:
+        if not task_list or len(task_list) <= 0:
+            return False
+
+        for task in task_list:
+            self.downloader.add_task(task.get('url', ''), task.get('file_path', ''))
+        self.downloader.start()
+
+        return True

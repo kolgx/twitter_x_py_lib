@@ -15,7 +15,9 @@ class TwitterXSource:
 
     def load(self, source_dict: dict, timestr: str, download_count:int, has_video: bool = False) -> bool:
 
-        if 'video_info' in source_dict and has_video:
+        if 'video_info' in source_dict:
+            if not has_video:
+                return False
             video_url = get_highest_video_quality(source_dict['video_info']['variants'])
             file_name = f"{timestr}-vid_{download_count}"
             self.url = video_url
@@ -32,3 +34,9 @@ class TwitterXSource:
         else:
             return False
         return True
+
+    def get_task_dict(self, download_folder:str) -> Dict[str, str]:
+        return {
+            'url': self.url,
+            'file_path': f'{download_folder}/{self.file_name}.{self.suffix}'
+        }

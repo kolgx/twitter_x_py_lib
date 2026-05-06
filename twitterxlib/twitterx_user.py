@@ -104,7 +104,7 @@ class TwitterXUser:
                     tweet_msecs = int(source_dict['edit_control']['editable_until_msecs']) - 3600000
 
                 timestr = stamp2time(tweet_msecs)
-                _result = time_comparison(timestr, config.get('start_date', '2026-05-01'), config.get('end_date', '2030-01-01'))
+                _result = time_comparison(timestr, config.get('start_date', '2020-01-01'), config.get('end_date', '2030-01-01'))
 
                 if not _result[0]:  # 不符合时间限制
                     if not _result[1]:
