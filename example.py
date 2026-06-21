@@ -17,7 +17,8 @@ def main():
     config = { # 可选，自定义资源检索范围
         'start_date': '2026-05-01',
         'end_date': '2027-01-01',
-        'has_video': True # 启用视频检索
+        'has_video': True, # 启用视频检索
+        'is_load_retweet_source': False #加载转推音视频资源
     }
     source_list = client.get_user_media_by_name(USER_SCREEN_LIST[0], config=config) # 填入要下载的用户名(@后面的字符)
 
@@ -28,6 +29,12 @@ def main():
     # 5. 下载目标用户发布的资源
     if client.download_user_media_by_name(USER_SCREEN_LIST[0], './download/twitter/user1', config=config):
         print(f'success download user[{user.name}] source to local')
+
+    # 6. 获取转推资源网址列表
+    source_list = client.get_user_retweet_by_name(USER_SCREEN_LIST[0], config=config) # 填入要下载的用户名(@后面的字符)
+
+    # 7. 获取被转推用户列表
+    retweet_screen_name_list = client.get_user_retweet_screen_name_list(USER_SCREEN_LIST[0], config=config)
 
     return
 

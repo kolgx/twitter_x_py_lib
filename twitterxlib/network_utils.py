@@ -79,6 +79,42 @@ class NetworkUtils:
             print(f'Failed to fetch user media: {e}')
         return None
 
+    def get_user_retweet(self, rest_id: str, cursor: str = None) -> Dict[str, Any] | None:
+        url_top = (
+            f'https://twitter.com/i/api/graphql/2GIWTr7XwadIixZDtyXd4A/UserTweets'
+            f'?variables={{"userId":"{rest_id}","count":20,'
+        )
+        url_bottom = (
+            f'"includePromotedContent":false,"withQuickPromoteEligibilityTweetFields":true,'
+            f'"withVoice":true,"withV2Timeline":true}}'
+            f'&features={{"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,'
+            f'"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,'
+            f'"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,'
+            f'"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,'
+            f'"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,'
+            f'"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,'
+            f'"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,'
+            f'"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,'
+            f'"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}}'
+            f'&fieldToggles={{"withAuxiliaryUserLabels":false,"withArticleRichContentState":false}}'
+        )
+
+        if cursor:
+            url = f'{url_top}"cursor":"{cursor}",{url_bottom}'
+        else:
+            url = f'{url_top}{url_bottom}'
+
+        try:
+            response = httpx.get(quote_url(url), headers=self.headers, proxy=self.proxy)
+            self.request_count += 1
+            if response.status_code == 429:
+                print('API Rate limit exceeded')
+                return None
+            return json.loads(response.text)
+        except Exception as e:
+            print(f'Failed to fetch user media: {e}')
+        return None
+
     def download_source_by_list(self, task_list:List[Dict[str, str]]) -> bool:
         if not task_list or len(task_list) <= 0:
             return False

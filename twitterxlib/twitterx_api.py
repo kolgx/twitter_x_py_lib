@@ -61,6 +61,27 @@ class TwitterXClient:
 
         return user.source_list
 
+    def get_user_retweet_by_name(self, screen_name:str, config: dict = None, is_reset: bool = True) -> list | None:
+        """
+        获取指定用户发布的转推资源列表。
+
+        :param screen_name: Twitter/X 用户名（@ 后面的字符）
+        :param config: 可选检索配置字典，支持的 key:
+                       start_date (str) - 起始日期 "YYYY-MM-DD"，默认 "2020-01-01"
+                       end_date   (str) - 结束日期 "YYYY-MM-DD"，默认 "2030-01-01"
+                       has_video  (bool) - 是否包含视频，默认 False
+        :param is_reset: 是否重置之前加载的数据，默认 True
+        :return: TwitterXSource 对象列表，失败时返回 None
+        """
+        user = self.get_user_by_name(screen_name)
+        if not user:
+            return None
+
+        if not self.load_user_retweet(user, config, is_reset):
+            return None
+
+        return user.retweet_source_list
+
     def load_user_media(self, user: TwitterXUser, config: dict = None, is_reset: bool = True) -> bool:
         """
         加载指定用户的所有媒体资源（分页拉取）。
@@ -89,6 +110,42 @@ class TwitterXClient:
             if not config:
                 config = {}
             if user.load_media_dict(media_dict, config):
+                failed_count = 0
+            else:
+                print('Failed to load media for ' + user.print_user_info())
+                failed_count += 1
+                continue
+
+        return True
+
+    def load_user_retweet(self, user: TwitterXUser, config: dict = None, is_reset: bool = True) -> bool:
+        """
+        加载指定用户的转贴（分页拉取）。
+
+        :param user: TwitterXUser 对象
+        :param config: 检索配置，同 get_user_media_by_name 中的 config
+        :param is_reset: 是否重置之前加载的数据
+        :return: 成功返回 True，失败返回 False
+        """
+        if not user:
+            return False
+
+        if is_reset:
+            user.reset_data()
+
+        failed_count = 0
+        while user.is_continue_loading():
+            if failed_count >= 5:
+                return False
+
+            media_dict = self.network.get_user_retweet(user.rest_id, user.cursor)
+            if not media_dict:
+                print('No media found')
+                failed_count += 1
+                continue
+            if not config:
+                config = {}
+            if user.load_retweet_dict(media_dict, config, config.get('is_load_retweet_source', True)):
                 failed_count = 0
             else:
                 print('Failed to load media for ' + user.print_user_info())
@@ -134,3 +191,30 @@ class TwitterXClient:
 
         download_task_list = [item.get_task_dict(download_path) for item in source_list]
         return self.network.download_source_by_list(download_task_list)
+
+    def get_user_retweet_screen_name_list(self, screen_name:str, config: dict = None, is_reset: bool = False) -> list | None:
+        """
+                获取指定用户转推的用户列表。
+
+                :param screen_name: Twitter/X 用户名（@ 后面的字符）
+                :param config: 可选检索配置字典，支持的 key:
+                               start_date (str) - 起始日期 "YYYY-MM-DD"，默认 "2020-01-01"
+                               end_date   (str) - 结束日期 "YYYY-MM-DD"，默认 "2030-01-01"
+                :param is_reset: 是否重置之前加载的数据，默认 True
+                :return: TwitterXSource 对象列表，失败时返回 None
+                """
+        user = self.get_user_by_name(screen_name)
+        if not user:
+            return None
+
+        if len(user.retweet_screen_name_list) > 0:
+            return user.retweet_screen_name_list
+
+        if not config:
+            config = {}
+        config['is_load_retweet_source'] = False
+
+        if not self.load_user_retweet(user, config, is_reset):
+            return None
+
+        return user.retweet_screen_name_list

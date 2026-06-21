@@ -15,8 +15,11 @@ class TwitterXUser:
         self.start_label = True
         self.first_page = True
         self.download_count = 0
+        self.retweet_download_count = 0
         self.has_next_page = True
         self.source_list = []
+        self.retweet_source_list = []
+        self.retweet_screen_name_list = []
         return
 
     def __str__(self):
@@ -37,8 +40,11 @@ class TwitterXUser:
         self.start_label = True
         self.first_page = True
         self.download_count = 0
+        self.retweet_download_count = 0
         self.has_next_page = True
         self.source_list = []
+        self.retweet_source_list = []
+        self.retweet_screen_name_list = []
         return
 
     def load_media_dict(self, media_dict: dict, config: dict) -> bool:
@@ -123,6 +129,68 @@ class TwitterXUser:
                     if source.load(_media, timestr, self.download_count, config.get('has_video', False)):
                         self.source_list.append(source)
                         self.download_count += 1
+            except Exception as e:
+                print(f"解析单条出现的异常: {e}")
+                pass
+        return True
+
+    def load_retweet_dict(self, retweet_dict: dict, config: dict, is_load_retweet_source:bool = True) -> bool:
+        if not retweet_dict:
+            return False
+        try:
+            raw_data = retweet_dict['data']['user']['result']['timeline_v2']['timeline']['instructions'][-1]['entries']
+        except KeyError:
+            print("API响应中未找到 timeline_v2 结构")
+            return False
+
+        # 解析推文内容
+        for item in raw_data:
+            try:
+                if 'cursor-bottom' in item['entryId']:  # 更新下一页的请求编号(含转推模式&亮点模式)
+                    self.cursor = item['content']['value']
+                    continue
+                if 'tweet' in item['entryId']:
+                    source_dict = item['content']['itemContent']['tweet_results']['result']
+                else:
+                    continue
+
+                if 'tweet' in source_dict:
+                    legacy = source_dict['tweet']['legacy']
+                    tweet_msecs = int(source_dict['tweet']['edit_control']['editable_until_msecs']) - 3600000
+                else:
+                    legacy = source_dict['legacy']
+                    tweet_msecs = int(source_dict['edit_control']['editable_until_msecs']) - 3600000
+
+                timestr = stamp2time(tweet_msecs) #此时间是转贴时间
+                _result = time_comparison(timestr, config.get('start_date', '2020-01-01'), config.get('end_date', '2030-01-01'))
+
+                if not _result[0]:  # 不符合时间限制
+                    if not _result[1]:
+                        self.start_label = False
+                        break
+                    continue
+
+                if not 'retweeted_status_result' in legacy:  # 只要转推
+                    continue
+
+                tmp_tweet_retweet = legacy['retweeted_status_result']['result']
+                if not 'core' in tmp_tweet_retweet:
+                    tmp_tweet_retweet = legacy['retweeted_status_result']['result'].get('tweet')
+                # name = tmp_tweet_retweet['core']['user_results']['result']['legacy']['name']
+                screen_name = tmp_tweet_retweet['core']['user_results']['result']['legacy']['screen_name']
+                # full_text = tmp_tweet_retweet['legacy']['full_text']
+
+                if not screen_name in self.retweet_screen_name_list:
+                    self.retweet_screen_name_list.append(screen_name)
+
+                if not is_load_retweet_source:
+                    continue
+
+                for _media in tmp_tweet_retweet['legacy']['extended_entities']['media']:
+                    source = TwitterXSource()
+                    if source.load(_media, timestr, self.download_count, config.get('has_video', False)):
+                        self.retweet_source_list.append(source)
+                        self.retweet_download_count += 1
             except Exception as e:
                 print(f"解析单条出现的异常: {e}")
                 pass
