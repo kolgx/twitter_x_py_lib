@@ -107,7 +107,10 @@ class TwitterXUser:
                     tweet_msecs = int(source_dict['tweet']['edit_control']['editable_until_msecs']) - 3600000
                 else:
                     legacy = source_dict['legacy']
-                    tweet_msecs = int(source_dict['edit_control']['editable_until_msecs']) - 3600000
+                    if 'editable_until_msecs' in source_dict['edit_control']:
+                        tweet_msecs = int(source_dict['edit_control']['editable_until_msecs']) - 3600000
+                    else:
+                        tweet_msecs = int(source_dict['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
 
                 timestr = stamp2time(tweet_msecs)
                 _result = time_comparison(timestr, config.get('start_date', '2020-01-01'), config.get('end_date', '2030-01-01'))
