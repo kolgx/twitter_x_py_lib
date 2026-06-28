@@ -35,8 +35,8 @@ class TwitterXSource:
             return False
         return True
 
-    def get_task_dict(self, download_folder:str) -> Dict[str, str]:
+    def get_task_dict(self, download_folder:str, user_name:str = '') -> Dict[str, str]:
         return {
             'url': self.url,
-            'file_path': f'{download_folder}/{self.file_name}.{self.suffix}'
+            'file_path': f'{download_folder}/{user_name}{self.file_name}.{self.suffix}'
         }
