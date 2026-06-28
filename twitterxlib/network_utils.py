@@ -7,7 +7,10 @@ from .simple_tool_utils import quote_url
 from .network_downloader import AsyncDownloader
 
 class NetworkUtils:
-    def __init__(self, cookie: str, network_proxy: str=None, max_concurrent:int = 4):
+    def __init__(self, cookie: str, config_dict=None, network_proxy: str=None):
+        if config_dict is None:
+            config_dict = {}
+
         self.headers = {
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
             'authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
@@ -20,7 +23,7 @@ class NetworkUtils:
 
         self.proxy = network_proxy
         self.request_count = 0
-        self.downloader = AsyncDownloader(max_concurrent, proxy=network_proxy, log_output = False)
+        self.downloader = AsyncDownloader(config_dict.get('max_downloader', 4), proxy=config_dict.get('network_proxy'), log_output = config_dict.get('download_log', False))
         return
 
     def get_user_by_screen_name(self, screen_name: str) -> Dict[str, Any] | None:

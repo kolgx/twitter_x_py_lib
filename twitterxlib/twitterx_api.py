@@ -9,14 +9,16 @@ class TwitterXClient:
     Twitter/X API 客户端，封装了用户信息查询、媒体资源检索与下载功能。
     """
 
-    def __init__(self, user_token: str, max_down_thread:int = 4):
+    def __init__(self, user_token: str, config_dict=None):
         """
         初始化 API 客户端。
 
         :param user_token: Cookie 字符串，需包含 auth_token 与 ct0 字段，
                            格式: "auth_token=xxx; ct0=xxx;"
         """
-        self.network = NetworkUtils(user_token, max_concurrent=max_down_thread)
+        if config_dict is None:
+            config_dict = {}
+        self.network = NetworkUtils(user_token, config_dict=config_dict)
         self.cache_user_dict = {}
         return
 
