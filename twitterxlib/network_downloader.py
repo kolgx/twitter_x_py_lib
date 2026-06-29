@@ -35,14 +35,18 @@ class AsyncDownloader:
         count = 0
         while True:
             try:
-                response = client.get(quote_url(url), timeout=(3.05, 16))
-                if response.status_code == 404:
-                    raise Exception('404')
-
                 path = Path(file_path)
                 path.parent.mkdir(parents=True, exist_ok=True)
-                with open(path, 'wb') as f:
-                    f.write(response.content)
+
+                with client.stream("GET", quote_url(url), timeout=(3.05, 16)) as response:
+
+                    if response.status_code == 404:
+                        raise Exception('404')
+                    response.raise_for_status()
+
+                    with open(path, 'wb') as f:
+                        for chunk in response.iter_bytes(chunk_size=1024 * 1024): # 分片下载，减少内存占用
+                            f.write(chunk)
 
                 if self.log_output:
                     print(f'{file_path}=====>下载完成')

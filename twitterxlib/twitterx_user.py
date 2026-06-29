@@ -104,7 +104,10 @@ class TwitterXUser:
 
                 if 'tweet' in source_dict:
                     legacy = source_dict['tweet']['legacy']
-                    tweet_msecs = int(source_dict['tweet']['edit_control']['editable_until_msecs']) - 3600000
+                    if 'editable_until_msecs' in source_dict['tweet']['edit_control']:
+                        tweet_msecs = int(source_dict['tweet']['edit_control']['editable_until_msecs']) - 3600000
+                    else:
+                        tweet_msecs = int(source_dict['tweet']['edit_control']['edit_control_initial']['editable_until_msecs']) - 3600000
                 else:
                     legacy = source_dict['legacy']
                     if 'editable_until_msecs' in source_dict['edit_control']:
