@@ -1,11 +1,13 @@
 import re
 import time
-import urllib.parse
+from urllib.parse import quote as url_quote
 from datetime import datetime
 from typing import List, Dict
 
 def quote_url(url: str) -> str:
-    return urllib.parse.quote(url, safe=':/?=&')
+    if '%' in url:
+        return url
+    return url_quote(url, safe=':/?&=%#@[]!$()*,;+')
 
 def del_special_char(string: str) -> str:
     string = re.sub(r'[^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a\u3040-\u31FF\.]', '', string)

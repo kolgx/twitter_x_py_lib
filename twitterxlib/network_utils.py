@@ -122,7 +122,8 @@ class NetworkUtils:
         if not task_list or len(task_list) <= 0:
             return False
 
-        self.downloader.tasks = task_list
+        for task in task_list:
+            self.downloader.add_task(task.get('url', ''), task.get('file_path', ''))
         self.downloader.start()
 
         return True
