@@ -114,7 +114,7 @@ class TwitterXClient:
             if user.load_media_dict(media_dict, config):
                 failed_count = 0
             else:
-                print('Failed to load media for ' + user.print_user_info())
+                print('Failed to load media for ' + user.screen_name)
                 failed_count += 1
                 continue
 
